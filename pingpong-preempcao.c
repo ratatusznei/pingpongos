@@ -39,6 +39,8 @@ void Body (void * arg)
    task_exit (0) ;
 }
 
+void task_set_eet(task_t* task, int et);
+
 int main (int argc, char *argv[])
 {
    printf ("main: inicio\n");

@@ -39,8 +39,8 @@ void after_ppos_init () {
 		exit (1) ;
 	}
 
-	timer.it_value.tv_usec = 0 ;      // primeiro disparo, em micro-segundos
-	timer.it_value.tv_sec  = 1 ;      // primeiro disparo, em segundos
+	timer.it_value.tv_usec = 1 ;      // primeiro disparo, em micro-segundos
+	timer.it_value.tv_sec  = 0 ;      // primeiro disparo, em segundos
 	timer.it_interval.tv_usec = 1000 ;// disparos subsequentes, em micro-segundos
 	timer.it_interval.tv_sec  = 0 ;   // disparos subsequentes, em segundos
 
@@ -68,6 +68,8 @@ void after_task_create (task_t *task ) {
 	task->remaining_time = 99999;
 	task->running_time = 0;
 	task->user_task = 1;
+	task->activations = 0;
+	task->create_time = systime();
 #ifdef DEBUG
     printf("\ntask_create - AFTER - [%d]", task->id);
 #endif
@@ -82,6 +84,12 @@ void before_task_exit () {
 
 void after_task_exit () {
     // put your customization here
+	printf("Task %d exit: execution time %d ms, processor time %d ms, %d activation\n",
+		taskExec->id, 
+		systime() - taskExec->create_time,
+		taskExec->running_time,
+		taskExec->activations
+	);
 #ifdef DEBUG
     printf("\ntask_exit - AFTER- [%d]", taskExec->id);
 #endif
@@ -96,7 +104,9 @@ void before_task_switch ( task_t *task ) {
 
 void after_task_switch ( task_t *task ) {
     // put your customization here
-	task->quantum_counter = 20;
+	task->quantum_counter = 3000;
+	task->switch_time = systime();
+	task->activations += 1;
 #ifdef DEBUG
     printf("\ntask_switch - AFTER - [%d -> %d]", taskExec->id, task->id);
 #endif
@@ -110,6 +120,9 @@ void before_task_yield () {
 }
 void after_task_yield () {
     // put your customization here
+	int dt = systime() - taskExec->switch_time;
+	taskExec->running_time += dt;
+	taskExec->remaining_time -= dt;
 #ifdef DEBUG
     printf("\ntask_yield - AFTER - [%d]", taskExec->id);
 #endif
@@ -443,7 +456,8 @@ void tratador(int signum) {
 		taskExec->quantum_counter -= 1;
 
 		if (taskExec->quantum_counter == 0) {
-			task_suspend(taskExec, &readyQueue);
+			// printf("------- quantum 0");
+			task_yield();
 		}
 	}
 	
@@ -481,14 +495,14 @@ task_t* scheduler_FCFS() {
 
 
 void print_tcb( task_t* task ){ 
-	printf("[%d %d %d %d: %d]", task->id, task->execution_time, task->running_time, task->remaining_time, task->user_task);
+	printf("[%d %d %d %d %d: %d]", task->id, task->execution_time, task->running_time, task->remaining_time, task->quantum_counter, task->user_task);
 }
 
 task_t* scheduler_SRTF() {
 	task_t* shortest_task = NULL;
 	task_t* p = readyQueue;
 
-	PRINT_READY_QUEUE
+	// PRINT_READY_QUEUE
 	const int n = queue_size((queue_t*) readyQueue);
 	for (int i = 0; i < n; ++i) {
 		if (shortest_task == NULL || task_get_ret(p) < task_get_ret(shortest_task)) {

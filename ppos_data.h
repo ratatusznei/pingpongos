@@ -28,8 +28,11 @@ typedef struct task_t
    int running_time;  // tempo de execução
    int execution_time; // tempo de execução estimado
    int remaining_time; // tempo restante estimado  
-   int quantum_counter;
-   int user_task;
+   int quantum_counter; // contador de quantum
+   int user_task; // flag para marcar tasks de sistema
+   int activations; // contador de ativacoes para imprimir métricas
+   int create_time; // tempo de criacao da task em systicks
+   int switch_time; // tempo do ultimo momento em que a task recebeu o processador em systick
 } task_t ;
 
 // estrutura que define um semáforo
