@@ -27,6 +27,8 @@ task_t new_user_tasks[50];
 int last_created_task = 0;
 
 
+int task_get_eet(task_t* et);
+int task_set_eet(task_t* task, int et);
 
 // corpo das threads
 void Body (void * arg)
