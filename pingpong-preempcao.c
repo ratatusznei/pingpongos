@@ -46,10 +46,15 @@ int main (int argc, char *argv[])
    ppos_init () ;
 
    task_create (&Pang, Body, "    Pang") ;
+   task_set_eet(&Pang, 3);
    task_create (&Peng, Body, "        Peng") ;
+   task_set_eet(&Peng, 4);
    task_create (&Ping, Body, "            Ping") ;
+   task_set_eet(&Ping, 5);
    task_create (&Pong, Body, "                Pong") ;
+   task_set_eet(&Pong, 2);
    task_create (&Pung, Body, "                    Pung") ;
+   task_set_eet(&Pung, 1);
 
    task_join(&Pang);
    task_join(&Peng);

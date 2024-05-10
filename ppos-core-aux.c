@@ -1,6 +1,10 @@
 #include "ppos.h"
 #include "ppos-core-globals.h"
 
+#include <stdlib.h>
+#include <signal.h>
+#include <sys/time.h>
+
 
 // ****************************************************************************
 // Coloque aqui as suas modificações, p.ex. includes, defines variáveis, 
@@ -18,8 +22,34 @@ void before_ppos_init () {
 #endif
 }
 
+void tratador(int);
+struct sigaction action;
+struct itimerval timer;
+
 void after_ppos_init () {
     // put your customization here
+	systemTime = 0;
+	taskDisp->user_task = 0;	
+
+	action.sa_handler = tratador;
+	sigemptyset (&action.sa_mask) ;
+	action.sa_flags = 0 ;
+	if (sigaction (SIGALRM, &action, 0) < 0) {
+		perror ("Erro em sigaction: ") ;
+		exit (1) ;
+	}
+
+	timer.it_value.tv_usec = 0 ;      // primeiro disparo, em micro-segundos
+	timer.it_value.tv_sec  = 1 ;      // primeiro disparo, em segundos
+	timer.it_interval.tv_usec = 1000 ;// disparos subsequentes, em micro-segundos
+	timer.it_interval.tv_sec  = 0 ;   // disparos subsequentes, em segundos
+
+	// arma o temporizador ITIMER_REAL (vide man setitimer)
+	if (setitimer (ITIMER_REAL, &timer, 0) < 0) {
+		perror ("Erro em setitimer: ") ;
+		exit (1) ;
+	}
+	
 #ifdef DEBUG
     printf("\ninit - AFTER");
 #endif
@@ -37,6 +67,7 @@ void after_task_create (task_t *task ) {
 	task->execution_time = 99999;
 	task->remaining_time = 99999;
 	task->running_time = 0;
+	task->user_task = 1;
 #ifdef DEBUG
     printf("\ntask_create - AFTER - [%d]", task->id);
 #endif
@@ -65,6 +96,7 @@ void before_task_switch ( task_t *task ) {
 
 void after_task_switch ( task_t *task ) {
     // put your customization here
+	task->quantum_counter = 20;
 #ifdef DEBUG
     printf("\ntask_switch - AFTER - [%d -> %d]", taskExec->id, task->id);
 #endif
@@ -404,6 +436,19 @@ int after_mqueue_msgs (mqueue_t *queue) {
  *
  */
 
+void tratador(int signum) {
+	systemTime += 1;
+
+	if (taskExec->user_task) {
+		taskExec->quantum_counter -= 1;
+
+		if (taskExec->quantum_counter == 0) {
+			task_suspend(taskExec, &readyQueue);
+		}
+	}
+	
+}
+
 void task_set_eet(task_t* task, int et) {
     if (task == NULL) {
 		task = taskExec;
@@ -436,7 +481,7 @@ task_t* scheduler_FCFS() {
 
 
 void print_tcb( task_t* task ){ 
-	printf("[%d %d %d %d]", task->id, task->execution_time, task->running_time, task->remaining_time);
+	printf("[%d %d %d %d: %d]", task->id, task->execution_time, task->running_time, task->remaining_time, task->user_task);
 }
 
 task_t* scheduler_SRTF() {
