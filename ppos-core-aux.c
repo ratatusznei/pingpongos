@@ -34,6 +34,9 @@ void before_task_create (task_t *task ) {
 
 void after_task_create (task_t *task ) {
     // put your customization here
+	task->execution_time = 99999;
+	task->remaining_time = 99999;
+	task->running_time = 0;
 #ifdef DEBUG
     printf("\ntask_create - AFTER - [%d]", task->id);
 #endif
@@ -404,21 +407,24 @@ int after_mqueue_msgs (mqueue_t *queue) {
 void task_set_eet(task_t* task, int et) {
     if (task == NULL) {
 		task = taskExec;
-        task->remainingTime = et - task->executionTime;
 	}
 
-	task->executionTime = et;
+	task->execution_time = et;
+	task->remaining_time = task->execution_time - task->running_time;
 }
 
 int task_get_eet(task_t* task) {
 	if (task != NULL) {
-		return task->executionTime;
+		return task->execution_time;
 	}
-	return taskExec->executionTime;
+	return taskExec->execution_time;
 }
 
 int task_get_ret(task_t* task) {
-    return task->remainingTime;
+	if (task != NULL) {
+		return task->remaining_time;
+	}
+	return taskExec->remaining_time;
 }
 
 task_t* scheduler_FCFS() {
@@ -428,10 +434,28 @@ task_t* scheduler_FCFS() {
 	return NULL;
 }
 
+
+void print_tcb( task_t* task ){ 
+	printf("[%d %d %d %d]", task->id, task->execution_time, task->running_time, task->remaining_time);
+}
+
 task_t* scheduler_SRTF() {
-	return NULL;
+	task_t* shortest_task = NULL;
+	task_t* p = readyQueue;
+
+	PRINT_READY_QUEUE
+	const int n = queue_size((queue_t*) readyQueue);
+	for (int i = 0; i < n; ++i) {
+		if (shortest_task == NULL || task_get_ret(p) < task_get_ret(shortest_task)) {
+			shortest_task = p;
+		}
+
+		p = p->next;
+	}
+
+	return shortest_task;
 }
 
 task_t* scheduler() {
-	return scheduler_FCFS();
+	return scheduler_SRTF();
 }
