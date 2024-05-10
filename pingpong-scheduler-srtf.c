@@ -95,6 +95,10 @@ int main (int argc, char *argv[])
 
   task_yield () ;
 
+  for (i=0; i<USER_TASKS_MAX; i++) {
+	task_join(&user_tasks[i]);
+  }
+
   printf ("main: fim\n");
   exit (0) ;
 }
