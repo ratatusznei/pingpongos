@@ -1,3 +1,9 @@
+/*
+ * Equipe:
+ * Fernando Henrique Ratusznei Caetano
+ * Gustavo Esmanhotto Bareta
+ */
+
 // PingPongOS - PingPong Operating System
 // Prof. Carlos A. Maziero, DINF UFPR
 // Versão 1.1 -- Julho de 2016

@@ -1,3 +1,10 @@
+/*
+ * Equipe:
+ * Fernando Henrique Ratusznei Caetano
+ * Gustavo Esmanhotto Bareta
+ */
+
+
 #include "ppos.h"
 #include "ppos-core-globals.h"
 
