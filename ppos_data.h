@@ -34,6 +34,10 @@ typedef struct task_t
    int create_time; // tempo de criacao da task em systicks
 } task_t ;
 
+int task_get_eet(task_t* task);
+void task_set_eet(task_t* task, int et);
+int task_get_ret(task_t* task);
+
 // estrutura que define um semáforo
 typedef struct {
     struct task_t *queue;

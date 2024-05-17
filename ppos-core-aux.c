@@ -29,7 +29,10 @@ struct itimerval timer;
 void after_ppos_init () {
     // put your customization here
 	systemTime = 0;
-	taskDisp->user_task = 0;	
+	taskDisp->user_task = 0;
+	taskDisp->remaining_time = 999999;
+	taskMain->user_task = 0;
+	taskMain->remaining_time = 999999;
 
 	action.sa_handler = tratador;
 	sigemptyset (&action.sa_mask) ;
@@ -452,7 +455,7 @@ void tratador(int signum) {
 	if (taskExec->user_task) {
 		taskExec->quantum_counter -= 1;
 		taskExec->running_time += 1;
-		taskExec->remaining_time = taskExec->execution_time - taskExec->running_time;
+		taskExec->remaining_time -= 1;
 
 		if (taskExec->quantum_counter == 0) {
 			task_yield();
