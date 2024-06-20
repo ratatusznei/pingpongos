@@ -7,6 +7,9 @@
 #ifndef __DISK_MGR__
 #define __DISK_MGR__
 
+#include "ppos_data.h"
+#include "ppos-core-globals.h"
+
 // estruturas de dados e rotinas de inicializacao e acesso
 // a um dispositivo de entrada/saida orientado a blocos,
 // tipicamente um disco rigido.
@@ -14,8 +17,12 @@
 // estrutura que representa um disco no sistema operacional
 typedef struct
 {
-  // completar com os campos necessarios
+	// completar com os campos necessarios
+	struct task_t taskDisk;
+	struct task_t* diskQueue;
 } disk_t ;
+
+extern disk_t disk_mgr;
 
 // inicializacao do gerente de disco
 // retorna -1 em erro ou 0 em sucesso

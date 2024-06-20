@@ -1,4 +1,5 @@
 #include "ppos.h"
+#include "ppos_disk.h"
 #include "ppos-core-globals.h"
 
 #include <stdlib.h>
@@ -13,8 +14,6 @@
 
 // ****************************************************************************
 
-
-
 void before_ppos_init () {
     // put your customization here
 #ifdef DEBUG
@@ -25,6 +24,9 @@ void before_ppos_init () {
 void tratador(int);
 struct sigaction action;
 struct itimerval timer;
+
+void tratador_disco(int);
+struct sigaction action_disco;
 
 void after_ppos_init () {
     // put your customization here
@@ -50,6 +52,14 @@ void after_ppos_init () {
 	// arma o temporizador ITIMER_REAL (vide man setitimer)
 	if (setitimer (ITIMER_REAL, &timer, 0) < 0) {
 		perror ("Erro em setitimer: ") ;
+		exit (1) ;
+	}
+
+	action_disco.sa_handler = tratador_disco;
+	sigemptyset (&action_disco.sa_mask) ;
+	action_disco.sa_flags = 0 ;
+	if (sigaction (SIGUSR1, &action_disco, 0) < 0) {
+		perror ("Erro em sigaction: ") ;
 		exit (1) ;
 	}
 	
@@ -515,4 +525,9 @@ task_t* scheduler_SRTF() {
 
 task_t* scheduler() {
 	return scheduler_SRTF();
+}
+
+// -------------- DISCO
+void tratador_disco(int signum) {
+	task_resume(&disk_mgr.taskDisk);
 }
