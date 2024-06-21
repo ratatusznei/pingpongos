@@ -34,6 +34,8 @@ typedef struct
 	int blocks_percorridos;
 
 	struct task_t taskDisk;
+
+	mutex_t queue_mutex;
 	struct disk_queue_t *diskQueue;
 } disk_t ;
 

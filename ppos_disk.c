@@ -29,7 +29,6 @@ pedido_t *cscan(disk_queue_t *q) {
 		disk_mgr.blocks_percorridos += disk_mgr.numBlocks; // move para o inicio
 		disk_mgr.curr_block = 0;
 
-
 		next_pedido = q;
 		p = q->next;
 
@@ -77,7 +76,9 @@ void disk_mgr_Body() {
 			// cscan   4223   26350 ms
 			// sstf    4217   26466 ms
 			// fcfs    7681   30025 ms
+			mutex_lock(&disk_mgr.queue_mutex);
 			pedido_t *p = fcfs(disk_mgr.diskQueue);
+			mutex_unlock(&disk_mgr.queue_mutex);
 	
 			disk_cmd(p->type, p->block, p->buffer) ;
 
@@ -124,6 +125,8 @@ int disk_mgr_init (int *numBlocks, int *blockSize) {
 	disk_mgr.curr_block = 0;
 	disk_mgr.blocks_percorridos = 0;
 
+	mutex_create(&disk_mgr.queue_mutex);
+
 	return 0;
 }
 
@@ -136,7 +139,9 @@ int disk_block_command(int cmd, int block, void *buffer) {
 	p->block = block;
 	p->buffer = buffer;
 
+	mutex_lock(&disk_mgr.queue_mutex);
 	queue_append((queue_t**) &disk_mgr.diskQueue, (queue_t*) p);
+	mutex_unlock(&disk_mgr.queue_mutex);
 
 	int result = disk_cmd(DISK_CMD_STATUS, 0, 0);
 	if (result == DISK_STATUS_IDLE) {
@@ -146,7 +151,9 @@ int disk_block_command(int cmd, int block, void *buffer) {
 	task_suspend(taskExec, NULL);
 	task_yield();
 
+	mutex_lock(&disk_mgr.queue_mutex);
 	queue_remove((queue_t**) &disk_mgr.diskQueue, (queue_t*) p);
+	mutex_unlock(&disk_mgr.queue_mutex);
 	free(p);
 
 	return 0;
