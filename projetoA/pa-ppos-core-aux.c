@@ -41,6 +41,7 @@ void after_ppos_init () {
 	action.sa_handler = tratador;
 	sigemptyset (&action.sa_mask) ;
 	action.sa_flags = 0 ;
+
 	if (sigaction (SIGALRM, &action, 0) < 0) {
 		perror ("Erro em sigaction: ") ;
 		exit (1) ;

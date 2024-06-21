@@ -529,5 +529,6 @@ task_t* scheduler() {
 
 // -------------- DISCO
 void tratador_disco(int signum) {
+	// printf("- SINAL DISCO\n");
 	task_resume(&disk_mgr.taskDisk);
 }

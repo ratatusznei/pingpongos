@@ -15,11 +15,22 @@
 // tipicamente um disco rigido.
 
 // estrutura que representa um disco no sistema operacional
+
+typedef struct disk_queue_t {
+	struct disk_queue_t *next, *prev;
+	struct task_t *task;
+	int type; // READ / WRITE
+	int block;
+	void *buffer;
+} disk_queue_t;
+
+typedef struct disk_queue_t pedido_t;
+
 typedef struct
 {
 	// completar com os campos necessarios
 	struct task_t taskDisk;
-	struct task_t* diskQueue;
+	struct disk_queue_t *diskQueue;
 } disk_t ;
 
 extern disk_t disk_mgr;

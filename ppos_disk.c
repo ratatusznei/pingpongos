@@ -5,17 +5,33 @@
 
 disk_t disk_mgr;
 
+pedido_t *cscan(disk_queue_t *q) {
+	return q;
+}
+
+pedido_t *sstf(disk_queue_t *q) {
+	return q;
+}
+
+pedido_t *fcfs(disk_queue_t *q) {
+	return q;
+}
+
 void disk_mgr_Body() {
-	while (1) {
-		task_suspend(taskExec, NULL);
-		task_yield();
+	while (countTasks > 1) {
+		int result = disk_cmd(DISK_CMD_STATUS, 0, 0);
+		if (result == DISK_STATUS_IDLE && disk_mgr.diskQueue != NULL) {
+			pedido_t *p = fcfs(disk_mgr.diskQueue);
+	
+			disk_cmd(p->type, p->block, p->buffer) ;
 
-		task_t *p = disk_mgr.diskQueue;
+			task_suspend(taskExec, NULL);
+			task_yield();
 
-		if (p != NULL) {
-			queue_remove((queue_t**) &disk_mgr.diskQueue, (queue_t*) p);
-			task_resume(p);
+			task_resume(p->task);
 		}
+
+		task_yield();
 	}
 }
 
@@ -39,40 +55,43 @@ int disk_mgr_init (int *numBlocks, int *blockSize) {
 	}
 
 	task_create(&disk_mgr.taskDisk, disk_mgr_Body, NULL);
+	disk_mgr.taskDisk.user_task = 0;
+	disk_mgr.taskDisk.remaining_time = 999999;
+
+	return 0;
+}
+
+int disk_block_command(int cmd, int block, void *buffer) {
+	pedido_t *p = (pedido_t *) malloc(sizeof(pedido_t));
+	p->next = NULL;
+	p->prev = NULL;
+	p->task = taskExec;
+	p->type = cmd;
+	p->block = block;
+	p->buffer = buffer;
+
+	queue_append((queue_t**) &disk_mgr.diskQueue, (queue_t*) p);
+
+	int result = disk_cmd(DISK_CMD_STATUS, 0, 0);
+	if (result == DISK_STATUS_IDLE) {
+		task_resume(&disk_mgr.taskDisk);
+	}
+
+	task_suspend(taskExec, NULL);
+	task_yield();
+
+	queue_remove((queue_t**) &disk_mgr.diskQueue, (queue_t*) p);
+	free(p);
 
 	return 0;
 }
 
 // leitura de um bloco, do disco para o buffer
 int disk_block_read (int block, void *buffer) {
-	int result = disk_cmd(DISK_CMD_STATUS, 0, 0);
-	if (result != 1) {
-		return -1;
-	}
-
-	if (disk_cmd(DISK_CMD_READ, block, buffer) < 0) {
-		return -1;
-	}
-
-	task_suspend(taskExec, &disk_mgr.diskQueue);
-	task_yield();
-
-	return 0;
+	return disk_block_command(DISK_CMD_READ, block, buffer);
 }
 
 // escrita de um bloco, do buffer para o disco
 int disk_block_write (int block, void *buffer) {
-	int result = disk_cmd(DISK_CMD_STATUS, 0, 0);
-	if (result != 1) {
-		return -1;
-	}
-
-	if (disk_cmd(DISK_CMD_WRITE, block, buffer) < 0) {
-		return -1;
-	}
-
-	task_suspend(taskExec, &disk_mgr.diskQueue);
-	task_yield();
-
-	return 0;
+	return disk_block_command(DISK_CMD_WRITE, block, buffer);
 }
