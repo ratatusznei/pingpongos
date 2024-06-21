@@ -29,6 +29,10 @@ typedef struct disk_queue_t pedido_t;
 typedef struct
 {
 	// completar com os campos necessarios
+	int numBlocks;
+	int curr_block;
+	int blocks_percorridos;
+
 	struct task_t taskDisk;
 	struct disk_queue_t *diskQueue;
 } disk_t ;
